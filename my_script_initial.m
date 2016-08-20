@@ -1,47 +1,45 @@
 clear all;
 close all;
 
-video=VideoReader('fc2_save_2016-08-11-124004-0000.avi');
-frames=zeros(video.Height,video.Width,video.Duration*video.FrameRate);
-diff=[];
+% video=VideoReader('fc2_save_2016-08-11-124004-0000.avi');
+% frames=zeros(video.Height,video.Width,video.Duration*video.FrameRate);
+% diff=[];
+% 
+% check=0;
+% 
+% matchedCoordinates=zeros(89,10,2);
+% limit=.9*10^7;
+% 
+% our_frames=zeros(1,video.Duration*video.FrameRate);
+% for t=1:(video.Duration*video.FrameRate)
+%    frames(:,:,t)=rgb2gray(readFrame(video));
+%    
+%    %% Check whether the robot is stationary or moving %%
+%    if t>1
+%        d=abs(frames(:,:,t)-frames(:,:,t-1)); %% d - 960*1280
+%        diff(t-1)=sum(sum(d(:))); %% 1*99
+%        if (check==0) && (diff(t-1)>limit)
+%            check=t-1;               
+%        end
+%    end
+% end
+% 
+% % 89 изображений
+% my_images=imresize(frames(:,:,check:end),0.5);
 
-check=0;
-
-matchedCoordinates=zeros(89,10,2);
-limit=.9*10^7;
-
-our_frames=zeros(1,video.Duration*video.FrameRate);
-for t=1:(video.Duration*video.FrameRate)
-   frames(:,:,t)=rgb2gray(readFrame(video));
-   
-   %% Check whether the robot is stationary or moving %%
-   if t>1
-       d=abs(frames(:,:,t)-frames(:,:,t-1)); %% d - 960*1280
-       diff(t-1)=sum(sum(d(:))); %% 1*99
-       if (check==0) && (diff(t-1)>limit)
-           check=t-1;               
-       end
-   end
-end
-
-% 89 изображений
-my_images=imresize(frames(:,:,check:end),0.5);
-my_images_skip = my_images(:,:,1:10:89);
-% load('my_images.mat');
-
+load('my_images.mat');
 
 for t=1:89
-    
     %% detect corners on first image, indexing
-    corners_im1=detectHarrisFeatures(my_images_skip(:,:,t),'FilterSize',5);
-    [feature_im1,validpoint_im1]=extractFeatures(uint8(my_images_skip(:,:,t)),corners_im1);
+    corners_im1=detectHarrisFeatures(my_images(:,:,t),'FilterSize',5);
+    [feature_im1,validpoint_im1]=extractFeatures(uint8(my_images(:,:,t)),corners_im1);
     validpoint_strong_im1 = validpoint_im1.selectStrongest(80);
     [ismember_im1,index_im1]=ismember(validpoint_strong_im1.Location(:,1),validpoint_im1.Location(:,1));
     feature_index_im1 = feature_im1.Features(index_im1,:);
     
     %% detect corners on second image, indexing
-    corners_im2 = detectHarrisFeatures(my_images_skip(:,:,t+1),'FilterSize',5);
-    [feature_im2,validpoint_im2]=extractFeatures(uint8(my_images_skip(:,:,t+1)),corners_im2);
+    corners_im2 = detectHarrisFeatures(my_images(:,:,t+1),'FilterSize',5);
+    [feature_im2,validpoint_im2]=extractFeatures(uint8(my_images(:,:,t+1)),corners_im2);
     validpoint_strong_im2 = validpoint_im2.selectStrongest(80);
     [ismember_im2,index_im2]=ismember(validpoint_strong_im2.Location(:,1),validpoint_im2.Location(:,1));
     features_index_im2 = feature_im2.Features(index_im2,:);
@@ -52,12 +50,9 @@ for t=1:89
     validPointXY_im2 = validpoint_strong_im2.Location;
     matchedPointXY_im1 = validPointXY_im1(matchedPairs(:,1),:);
     matchedPointXY_im2 = validPointXY_im2(matchedPairs(:,2),:);
-    diffBtwMatchedCoordinates = validPointXY_im1(matchedPairs(:,1),:) - validPointXY_im2(matchedPairs(:,2),:);
     %matchedCoordinates = cat(3,matchedPointXY_im1, matchedPointXY_im2);
     %matchedCoordinates(:,:,:,t) = (3,matchedPointXY_im1, matchedPointXY_im2,:);
-    figure(t),showMatchedFeatures(my_images_skip(:,:,t),my_images_skip(:,:,t+1),matchedPointXY_im1,matchedPointXY_im2, 'PlotOptions',{'bo','g*','b-'});
-    title('Matching Features');
-    legend('Matched points 1','Matched points 2');
+    figure(1),showMatchedFeatures(my_images(:,:,t),my_images(:,:,t+1),matchedPointXY_im1,matchedPointXY_im2);
 %     matchedCoordinates(t,:,:) = matchedPointXY_im1(1:10,:);
 %     matchedCoordinates(t+1,:,:)= matchedPointXY_im2(1:10,:);
   %  matchedCoordinates = [matchedCoordinates(:,:,1),matchedCoordinates(:,:,2)];
